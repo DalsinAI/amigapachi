@@ -36,7 +36,7 @@ void pause_events()
     while(SDL_PollEvent(&event))
     {
         if(event.type==SDL_KEYDOWN)
-            if(event.key.keysym.sym==SDLK_h || event.key.keysym.sym==SDLK_F1)
+            if(event.key.keysym.scancode==SDL_SCANCODE_H || event.key.keysym.scancode==SDL_SCANCODE_F1)
                 escape_exit=1;
     }
 }
@@ -68,7 +68,7 @@ void hiscore_events()
 		    {
 			namechar=0;
 			for(n=0;n<10;n++)
-			    playername[n] = '.';
+			    playername[n] = ' ';
 		    }
 		}
 	    }
@@ -100,16 +100,22 @@ void hiscore_events()
 void menu_events()
 {
     SDL_Event event;
-    Uint8 *keys;
     Mix_Volume(0,100);
     while(SDL_PollEvent(&event)==1)
     {
+	if(event.type==SDL_KEYUP)        // any key release re-arms the menu; this resyncs the menu
+	    menu_armed=1;                // even when a key pressed during the black intro load left
+	                                 // SDL's repeat state stuck (a swallowed KEYUP)
 	if(event.type==SDL_QUIT)
 		gameexit=1;
 
 	check_joystick_events(&event, joypos);
-	keys = SDL_GetKeyState(NULL);
-        if(keys[SDLK_DOWN] || keys[SDLK_KP2] || keys[SDLK_a] || joypos[JOY_DOWN])
+	int kd = (event.type==SDL_KEYDOWN && menu_armed);  // edge-triggered on the key press, but
+	int sc = kd ? (int)event.key.keysym.scancode : -1; // gated by our own "armed" flag instead
+	if(kd) menu_armed=0;                               // of SDL_KEYDOWN .repeat: a full-screen
+	                                    // toggle re-fire or a lost KEYUP could otherwise leave
+	                                    // .repeat stuck, so genuine presses were ignored forever.
+        if((kd && (sc==SDL_SCANCODE_DOWN || sc==SDL_SCANCODE_KP_2 || sc==SDL_SCANCODE_A)) || joypos[JOY_DOWN])
 	{
 	    Mix_PlayChannel(0,option,0);
     	    if(menuvalue == 7)
@@ -117,7 +123,7 @@ void menu_events()
 	    else
 		menuvalue++;
 	}
-	if(keys[SDLK_UP] || keys[SDLK_KP8] || keys[SDLK_q] || joypos[JOY_UP])
+	if((kd && (sc==SDL_SCANCODE_UP || sc==SDL_SCANCODE_KP_8 || sc==SDL_SCANCODE_Q)) || joypos[JOY_UP])
 	{
 	    Mix_PlayChannel(0,option,0);
 	    if(menuvalue == 1)
@@ -125,7 +131,7 @@ void menu_events()
 	    else
 		menuvalue--;
         }
-	if(keys[SDLK_SPACE] || keys[SDLK_RETURN] || joypos[JOY_BUTTON0])
+	if((kd && (sc==SDL_SCANCODE_SPACE || sc==SDL_SCANCODE_RETURN)) || joypos[JOY_BUTTON0])
 	{
     	    Mix_PlayChannel(0,option,0);
 
@@ -160,14 +166,13 @@ void menu_events()
 			break;
 		}
 	    }
-	    if(keys[SDLK_ESCAPE])
+	    if(kd && sc==SDL_SCANCODE_ESCAPE)
 		gameexit=1;
     }
 }
 
 void code_events()
 {
-    int n;
     SDL_Event event;
     
     while(SDL_PollEvent(&event)==1)
@@ -304,9 +309,8 @@ void check_joystick_events(SDL_Event *event, Uint8 *joypos)
 
 void game_events()
 {
-    int n;
     SDL_Event event;
-    Uint8 *keys;
+    const Uint8 *keys;
     
     if(mplayer[dificulty].lives==0)
         game_exit = 1;
@@ -315,12 +319,12 @@ void game_events()
     while(SDL_PollEvent(&event)==1)
     {
 	check_joystick_events(&event, joypos);
-	keys = SDL_GetKeyState(NULL);
+	keys = SDL_GetKeyboardState(NULL);
 
         mplayer[dificulty].left = 0;
         mplayer[dificulty].right = 0;
 
-	if(keys[SDLK_h] || keys[SDLK_F1])
+	if(keys[SDL_SCANCODE_H] || keys[SDL_SCANCODE_F1])
 	{
 	    escape_exit=0;
 	    SDL_Rect dst;
@@ -328,28 +332,28 @@ void game_events()
 	    SDL_Rect src;
 		src.x=dst.x-R_gamearea_x; src.y=dst.y-R_gamearea_y; src.w=dst.w; src.h=dst.h;
 	    print_text(menufont, screen, 32, 32, dst.x, dst.y, "PAUSED");
-	    SDL_UpdateRect(screen, dst.x, dst.y , dst.w, dst.h);
+	    flip_screen();
 	    while(escape_exit==0)
 	    {
 	    	pause_events();
 		SDL_Delay(5);
 	    }
 	    SDL_BlitSurface(screenbak, &src, screen, &dst);
-	    SDL_UpdateRect(screen, dst.x, dst.y , dst.w, dst.w);
+	    flip_screen();
 	}
-	if(keys[SDLK_o] || keys[SDLK_LEFT] || keys[SDLK_KP4] || joypos[JOY_LEFT])
+	if(keys[SDL_SCANCODE_O] || keys[SDL_SCANCODE_LEFT] || keys[SDL_SCANCODE_KP_4] || joypos[JOY_LEFT])
 	{
 	    mplayer[dificulty].left = 1;
 	    mplayer[dificulty].right = 0;
     	    mplayer[dificulty].facingleft = 1;
 	}
-        if(keys[SDLK_p] || keys[SDLK_RIGHT] || keys[SDLK_KP6] || joypos[JOY_RIGHT])
+        if(keys[SDL_SCANCODE_P] || keys[SDL_SCANCODE_RIGHT] || keys[SDL_SCANCODE_KP_6] || joypos[JOY_RIGHT])
 	{
     	    mplayer[dificulty].right = 1;
     	    mplayer[dificulty].left = 0;
     	    mplayer[dificulty].facingleft = 0;
 	}
-	if(keys[SDLK_q] || keys[SDLK_UP] || keys[SDLK_KP8] || joypos[JOY_UP])
+	if(keys[SDL_SCANCODE_Q] || keys[SDL_SCANCODE_UP] || keys[SDL_SCANCODE_KP_8] || joypos[JOY_UP])
 	{
 	    if(mplayer[dificulty].duck==1) // en esta rutina tiene que comprobar que si se quiere parar que no tenga nada encima que se lo impida
 	    {
@@ -370,7 +374,7 @@ void game_events()
 		}
 	    }
 	}
-	if(keys[SDLK_a] || keys[SDLK_DOWN] || keys[SDLK_KP2] || joypos[JOY_DOWN])
+	if(keys[SDL_SCANCODE_A] || keys[SDL_SCANCODE_DOWN] || keys[SDL_SCANCODE_KP_2] || joypos[JOY_DOWN])
 	{
 	    if(mplayer[dificulty].duck==0 && mplayer[dificulty].jump == 0 && mplayer[dificulty].infloor == 1)
 	    {
@@ -380,7 +384,7 @@ void game_events()
 	    if(mplayer[dificulty].jump == 0 && mplayer[dificulty].infloor == 1)
 		mplayer[dificulty].duck = 1;
 	}
-	if(keys[SDLK_SPACE] || keys[SDLK_KP0] || joypos[JOY_BUTTON0])
+	if(keys[SDL_SCANCODE_SPACE] || keys[SDL_SCANCODE_KP_0] || joypos[JOY_BUTTON0])
 	{
     	    if((mplayer[dificulty].infloor==1)&&(mplayer[dificulty].duck==0)&&(mplayer[dificulty].y+P_h/R_tileside==int(mplayer[dificulty].y+P_h/R_tileside)))
     	    {
@@ -393,7 +397,7 @@ void game_events()
 		Mix_PlayChannel(0,jump,0);
 	    }
 	}
-	if(keys[SDLK_ESCAPE])
+	if(keys[SDL_SCANCODE_ESCAPE])
 	{
 	    game_exit = 1;
 	}

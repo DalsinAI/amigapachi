@@ -10,17 +10,14 @@ AC_PROG_INSTALL
 AC_PROG_MAKE_SET
 
 # Checks for libraries.
-SDL_VERSION=1.2.0
-AM_PATH_SDL($SDL_VERSION,
-            :,
-	    AC_MSG_ERROR([*** SDL version $SDL_VERSION not found. Visit http://www.libsdl.org and get it])
-)
-AC_CHECK_LIB(SDL_mixer, Mix_OpenAudio,, AC_MSG_ERROR([*** SDL_mixer not found. Visit http://www.libsdl.org and get it]))
+# SDL 2 (and its mixer add-on) are located via pkg-config; the historic
+# AM_PATH_SDL / -lSDL_mixer probes only knew about SDL 1.2.
+PKG_CHECK_MODULES([SDL2], [sdl2 SDL2_mixer])
 AC_CHECK_LIB(pthread, pthread_create)
 
-CFLAGS="$CFLAGS $SDL_CFLAGS"
-CXXFLAGS="$CXXFLAGS $SDL_CFLAGS"
-LIBS="$LIBS $SDL_LIBS"
+CFLAGS="$CFLAGS $SDL2_CFLAGS"
+CXXFLAGS="$CXXFLAGS $SDL2_CFLAGS"
+LIBS="$LIBS $SDL2_LIBS"
 
 # Checks for header files.
 AC_HEADER_STDC
@@ -44,7 +41,7 @@ if test "$enable_devel" = "yes"; then
 	SCOREDIR="."
 else
 	DATADIR="$datadir/$PACKAGE"
-	SCOREDIR="/var/lib/games/$PACKAGE"
+	SCOREDIR="/var/games"
 fi
 
 eval DATAPATH=`eval echo "$DATADIR"`

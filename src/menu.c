@@ -37,9 +37,9 @@ void do_code()
     {
 	code_events();
 	print_text(menufont1, screen, 32, 32, 336, 241, "%s",code);
-        SDL_UpdateRect(screen, 300, 232, 200, 50);
+        flip_screen();
     }
-//    SDL_SetColorKey(menufont1,SDL_SRCCOLORKEY,SDL_MapRGB(menufont1->format,0,255,0));
+//    SDL_SetColorKey(menufont1,SDL_TRUE,SDL_MapRGB(menufont1->format,0,255,0));
 
     // comparar si el codigo es correcto
     
@@ -102,7 +102,7 @@ void do_menu()
     if(menuvalue == 7) font = menufont1; else font = menufont;
     print_text(font, screen, 32, 32 ,305, menustartpos+(6*40), " EXIT");
 
-    SDL_UpdateRect(screen, 300, 160, 240, 300);
+    flip_screen();
 }
 				
 void menu_loop()
@@ -122,8 +122,9 @@ void menu()
     	alpha=intro_blit(background,0,0,800,600,alpha,200,0);
 	delta_time();
     }
-    SDL_Flip(screen);
+    flip_screen();
     menuvalue=1;    
+    menu_armed=1;   // act on the next key press regardless of SDL stale repeat state (see input.c)
     while(gameexit==0 && startgame==0 && help==0 && hiscores==0)
     {
         menu_events();

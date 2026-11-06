@@ -23,15 +23,15 @@ void init_intro()
     dragontech=LoadT8(DATADIR"/Tgfx/dragontech.T8");
     line1=LoadT8(DATADIR"/Tgfx/line1.T8");
     line2=LoadT8(DATADIR"/Tgfx/line2.T8");
-    SDL_SetColorKey(dragontech, SDL_SRCCOLORKEY,SDL_MapRGB(dragontech->format,0,255,0));
-    SDL_SetColorKey(line1, SDL_SRCCOLORKEY,SDL_MapRGB(line1->format,0,0,0));
-    SDL_SetColorKey(line2, SDL_SRCCOLORKEY,SDL_MapRGB(line2->format,0,0,0));
+    SDL_SetColorKey(dragontech, SDL_TRUE,SDL_MapRGB(dragontech->format,0,255,0));
+    SDL_SetColorKey(line1, SDL_TRUE,SDL_MapRGB(line1->format,0,0,0));
+    SDL_SetColorKey(line2, SDL_TRUE,SDL_MapRGB(line2->format,0,0,0));
 
     comic_01=LoadT8(DATADIR"/Tgfx/comic_01.T8");
 
-    temp=SDL_CreateRGBSurface(SDL_SWSURFACE, screen_w, screen_h, screen_bpp, 255, 255, 255, 0);
+    temp=SDL_CreateRGBSurface(0, screen_w, screen_h, screen_bpp, 0, 0, 0, 0);
     SDL_FillRect(temp, NULL, SDL_MapRGB(temp->format,0,0,0));
-    black = SDL_DisplayFormat(temp);
+    black = display_format(temp);
     
     SDL_FreeSurface(temp);
     SDL_FillRect(screen, NULL, SDL_MapRGB(screen->format,0,0,0));
@@ -52,7 +52,6 @@ void intro()
     double introtime=0;
     escape_exit=0;
     float title_alpha=0;
-    int title_done=0;
     int n=1;
     while(escape_exit==0)
     {

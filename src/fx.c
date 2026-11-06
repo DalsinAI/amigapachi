@@ -12,43 +12,73 @@ float scanpos_y=R_gamearea_y - (P_h*P_h);
 void respawn() // rutina que hace reaparecer a Pachi
 {
     int scanspeed=1500;
-    SDL_Rect P_oldscansrect[P_h];
-    SDL_Rect P_scansrect[P_h];
-    SDL_Rect P_srcscan[P_h];
-//imprimimos los scans
+    int figx=int(mplayer[dificulty].x+R_gamearea_x); // figure column, screen x
+    int figw=mplayer[dificulty].w;                   // figure width (= P_w)
+    float scanfinal=mplayer[dificulty].y+P_h;         // fall is over past this
+
+    // Rebuild the whole falling column from scratch every frame.  First restore
+    // the background over the vertical strip the figure falls through.  A literal
+    // port of the SDL 1.2 code accumulates one scan-line per presented frame; on
+    // the slower SDL 2 renderer that smears every scan-line from the top of the
+    // play area down to its target and fills the strip into a solid block, losing
+    // the figure shape.  Redrawing each frame instead makes the result identical
+    // at any present rate.
+    SDL_Rect col;    col.x=figx;                  col.y=R_gamearea_y; col.w=figw; col.h=448;
+    SDL_Rect colbak; colbak.x=figx-R_gamearea_x;  colbak.y=0;         colbak.w=figw; colbak.h=448;
+    SDL_BlitSurface(screenbak,&colbak,screen,&col);
+
+    // Draw the figure vertically stretched: scan-line a of the sprite (only its
+    // non-transparent pixels, via the colour key) is repeated over a P_h-pixel
+    // band ending at its current falling position.  Consecutive scan-lines are
+    // P_h apart, so their bands tile seamlessly into one continuous, figure-shaped
+    // column; the painted length of each x-column equals the vertical extent of
+    // that part of the finished figure.  Once a scan-line reaches its resting
+    // height it stays there every frame, so the figure accumulates from the feet
+    // up (the lowest scan-lines arrive first) while the upper ones are still
+    // falling, rather than popping into place at the end.
+    SDL_Rect src; src.w=figw; src.h=1; src.x=figw*mplayer[dificulty].frame;
+    SDL_Rect dst; dst.w=figw; dst.h=1; dst.x=figx;
+    int pile_top=-1;   // smallest y reached by a settled row; -1 = nothing landed yet
+    int bridged=0;     // whether the lowest still-falling row was joined to the pile
     for(int a=P_h-1;a>=0;a--)
     {
-	P_scansrect[a].x=int(mplayer[dificulty].x+R_gamearea_x);P_scansrect[a].w=mplayer[dificulty].w;P_scansrect[a].h=1;
-	P_scansrect[a].y=int(scanpos_y+(a*P_h));
-	P_srcscan[a].h=1;P_srcscan[a].w=mplayer[dificulty].w;P_srcscan[a].x=(mplayer[dificulty].w*(mplayer[dificulty].frame));P_srcscan[a].y=0+a;
-	P_oldscansrect[a]=P_scansrect[a];
-
-	if((P_scansrect[a].y<mplayer[dificulty].y+R_gamearea_y+P_h-(P_h-a))&&(P_scansrect[a].y>R_gamearea_y))
+	src.y=a;
+	int cur=int(scanpos_y+(a*P_h));                     // leading pixel of row a
+	int yrest=int(mplayer[dificulty].y+R_gamearea_y+a); // its resting height
+	if(cur>=yrest)
 	{
-	    SDL_BlitSurface(player,&P_srcscan[a],screen,&P_scansrect[a]);
-	    SDL_UpdateRect(screen,P_scansrect[a].x,P_scansrect[a].y,P_scansrect[a].w,P_scansrect[a].h);
+	    dst.y=yrest;                                    // landed: stays in place
+	    SDL_BlitSurface(player,&src,screen,&dst);
+	    if(pile_top<0 || yrest<pile_top) pile_top=yrest; // track the top of the pile
+	}
+	else
+	{
+	    // Rows are P_h apart, but settled rows sit 1px apart, so the lowest still-
+	    // falling row would otherwise stop up to P_h above the built-up figure,
+	    // leaving a visible gap.  Bridge that one row down onto the pile.
+	    int bottom=cur;
+	    int floorcap=yrest;
+	    if(!bridged && pile_top>=0) { bottom=pile_top-1; floorcap=pile_top; bridged=1; }
+	    for(int ty=cur-P_h+1; ty<=bottom; ty++)         // falling: P_h-long trail
+	    {
+		if((ty>R_gamearea_y)&&(ty<floorcap))
+		{
+		    dst.y=ty;
+		    SDL_BlitSurface(player,&src,screen,&dst);
+		}
+	    }
 	}
     }
-    if(scanpos_y<mplayer[dificulty].y+P_h)
-	scanpos_y+=scanspeed*imove;
+    flip_screen();   // present the whole falling column in one flicker-free frame
+
+    if(scanpos_y<scanfinal)
+	scanpos_y+=scanspeed*imove;              // delta-time paced: ~constant duration
     else
     {
 	scanpos_y=R_gamearea_y - (P_h*P_h);
 	respawned=1;
 	imove=0.01;
-	SDL_Flip(screen);
-    }
-
-//borramos los scans recuperando el fondo que habia antes    
-
-    SDL_Rect bakscansrect[P_h];
-    for(int a=P_h-1;a>=0;a--)
-    {
-	bakscansrect[a]=P_oldscansrect[a];
-	P_oldscansrect[a].x-=R_gamearea_x;
-	P_oldscansrect[a].y-=R_gamearea_y;
-
-        SDL_BlitSurface(screenbak,&P_oldscansrect[a],screen,&bakscansrect[a]);
+	SDL_BlitSurface(screenbak,&colbak,screen,&col); // clear the column for the game loop
     }
 }
 
@@ -57,8 +87,8 @@ void initfade_object(int x, int y, int object)
 {
     alphade=255;
     object-=200;
-    fadeobject=SDL_CreateRGBSurface(SDL_SWSURFACE,R_tileside,R_tileside,16,0,0,0,0);
-    SDL_SetColorKey(fadeobject,SDL_SRCCOLORKEY,(fadeobject->format,0,255,0));
+    fadeobject=SDL_CreateRGBSurface(0,R_tileside,R_tileside,16,0,0,0,0);
+    SDL_SetColorKey(fadeobject,SDL_TRUE,(fadeobject->format,0,255,0));
     SDL_Rect objectsrc;
 	objectsrc.w=R_tileside;objectsrc.h=R_tileside;
 	objectsrc.y=R_tileside*10;objectsrc.x=R_tileside*object;
@@ -71,18 +101,18 @@ void initfade_object(int x, int y, int object)
 float fade_object(float alpha)
 {
     int fadealpha = int(alpha);
-    SDL_SetAlpha(fadeobject,SDL_SRCALPHA,fadealpha);
+    set_surface_alpha(fadeobject, 1, fadealpha);
     realfadingpos.x=R_gamearea_x+fadingpos.x;realfadingpos.y=R_gamearea_y+fadingpos.y;realfadingpos.w=fadingpos.w;realfadingpos.h=fadingpos.h;
 
     SDL_BlitSurface(screenbak,&fadingpos,screen,&realfadingpos);
     SDL_BlitSurface(fadeobject,NULL,screen,&realfadingpos);
-    SDL_UpdateRect(screen,realfadingpos.x,realfadingpos.y,realfadingpos.w,realfadingpos.h+2);
+    flip_screen();
     if(fadealpha<5)
     {
     	fadingobject=0;
 	SDL_BlitSurface(screenbak,&fadingpos,screen,&realfadingpos);
 	print_room();
-	SDL_Flip(screen);
+	flip_screen();
     }
     else
     {
@@ -140,7 +170,7 @@ void bright_obj(int bright_x, int bright_y)
     SDL_BlitSurface(screenbak,&brdst,screen,&brdstreal);
 //    SDL_BlitSurface(tiles,&objsrc,screen,&objdstreal);
     SDL_BlitSurface(bright,&brsrc,screen,&brdstreal);
-    SDL_UpdateRect(screen,brdstreal.x,brdstreal.y,brdstreal.w,brdstreal.h);
+    flip_screen();
 }
 
 void show_arrow(int arrow, int show)
@@ -159,7 +189,7 @@ void show_arrow(int arrow, int show)
 	    else
 		SDL_BlitSurface(screenbak, &src, screen, &dst);
 		
-	    SDL_UpdateRect(screen, dst.x, dst.y, dst.w, dst.h);
+	    flip_screen();
 	    break;
 	case arrow_right:
 	    dst.x=R_gamearea_x+(R_maxtiles_h*R_tileside)-(10+dst.w);
@@ -169,7 +199,7 @@ void show_arrow(int arrow, int show)
 	    else
 		SDL_BlitSurface(screenbak, &src, screen, &dst);
 
-	    SDL_UpdateRect(screen, dst.x, dst.y, dst.w, dst.h);
+	    flip_screen();
 	    break;
 	case arrow_up:
 //fprintf(stderr,"up");

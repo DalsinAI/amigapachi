@@ -31,17 +31,17 @@ void load_gamedata()
     LoadT(&scorefont1,DATADIR"/fonts/font16a.T");
     LoadT(&scorefont2,DATADIR"/fonts/font16c.T");
     SDL_Surface *temp;
-    temp = SDL_CreateRGBSurface(SDL_SWSURFACE,736,448,16,0,0,0,0); //esto es para reestablecer la pantalla
-    screenbak = SDL_DisplayFormat(temp);
+    temp = SDL_CreateRGBSurface(0,736,448,16,0,0,0,0); //esto es para reestablecer la pantalla
+    screenbak = display_format(temp);
     SDL_FreeSurface(temp);
-    SDL_SetColorKey(menufont, SDL_SRCCOLORKEY, SDL_MapRGB(menufont->format,0,255,0));
-    SDL_SetColorKey(monsters, SDL_SRCCOLORKEY, SDL_MapRGB(monsters->format,0,255,0));
-    SDL_SetColorKey(player, SDL_SRCCOLORKEY, SDL_MapRGB(player->format,0,0,0)); // el negro es transparente
-    SDL_SetColorKey(tiles, SDL_SRCCOLORKEY, SDL_MapRGB(tiles->format,0,255,0));
-    SDL_SetColorKey(bright, SDL_SRCCOLORKEY, SDL_MapRGB(bright->format,0,255,0));
-    SDL_SetAlpha(bright, SDL_SRCALPHA, 128);
-    SDL_SetColorKey(left, SDL_SRCCOLORKEY, SDL_MapRGB(left->format,0,0,0));
-    SDL_SetColorKey(right, SDL_SRCCOLORKEY, SDL_MapRGB(right->format,0,0,0));
+    SDL_SetColorKey(menufont, SDL_TRUE, SDL_MapRGB(menufont->format,0,255,0));
+    SDL_SetColorKey(monsters, SDL_TRUE, SDL_MapRGB(monsters->format,0,255,0));
+    SDL_SetColorKey(player, SDL_TRUE, SDL_MapRGB(player->format,0,0,0)); // el negro es transparente
+    SDL_SetColorKey(tiles, SDL_TRUE, SDL_MapRGB(tiles->format,0,255,0));
+    SDL_SetColorKey(bright, SDL_TRUE, SDL_MapRGB(bright->format,0,255,0));
+    set_surface_alpha(bright, 1, 128);
+    SDL_SetColorKey(left, SDL_TRUE, SDL_MapRGB(left->format,0,0,0));
+    SDL_SetColorKey(right, SDL_TRUE, SDL_MapRGB(right->format,0,0,0));
 
     jump       = Mix_LoadWAV(DATADIR"/sounds/jump.wav");
     obj        = Mix_LoadWAV(DATADIR"/sounds/obj.wav");
@@ -96,7 +96,8 @@ void load_hiscoredata()
     LoadT(&scorefont,DATADIR"/fonts/font16b.T");
     LoadT(&scorefont1,DATADIR"/fonts/font16d.T");
 
-    FILE *file = fopen(SCOREDIR"/data/scores.dat","rb");
+    FILE *file = fopen(SCOREDIR "/" PACKAGE ".scores", "rb");
+    if (file == NULL) return;
     for(int a=0; a < 10; a++)
     {
 	for(int b=0; b < 10; b++)
@@ -124,7 +125,8 @@ void unload_hiscoredata()
 }
 void save_hiscoredata()
 {
-    FILE *file = fopen(SCOREDIR"/data/scores.dat","rb+");
+    FILE *file = fopen(SCOREDIR "/" PACKAGE ".scores", "rb+");
+    if (file == NULL) return;
 
     for(int a=0;a<10;a++)
     {    
@@ -136,14 +138,14 @@ void save_hiscoredata()
 
         int lobyte,hibyte,vhibyte;
         hibyte=int(scoretime[a]/256);
-        lobyte=int(scoretime[a]-(hibyte+256));
+        lobyte=int(scoretime[a]-(hibyte*256)); // was hibyte+256: garbled the stored time
 
         putc(hibyte,file);
         putc(lobyte,file);
         putc(scoredif[a],file);
 
         vhibyte=int(scorescore[a]/65536);
-        hibyte=int((scorescore[a] - (scorescore[a]/65536))/256);
+        hibyte=int((scorescore[a] - (vhibyte*65536))/256); // was scorescore/65536: garbled the stored score
         lobyte=int(scorescore[a] - (vhibyte*65536 + hibyte*256));
 
 	putc(vhibyte,file);
@@ -158,8 +160,8 @@ void load_helpgfx()
     background=LoadT8(DATADIR"/Tgfx/help.T8");
     LoadT(&scorefont,DATADIR"/fonts/font16b.T");
     LoadT(&scorefont1,DATADIR"/fonts/font16a.T");
-    SDL_SetColorKey(scorefont, SDL_SRCCOLORKEY, SDL_MapRGB(scorefont->format,0,0,0));
-    SDL_SetColorKey(scorefont1, SDL_SRCCOLORKEY, SDL_MapRGB(scorefont1->format,0,0,0));
+    SDL_SetColorKey(scorefont, SDL_TRUE, SDL_MapRGB(scorefont->format,0,0,0));
+    SDL_SetColorKey(scorefont1, SDL_TRUE, SDL_MapRGB(scorefont1->format,0,0,0));
 }
 void unload_helpgfx()
 {
@@ -173,8 +175,8 @@ void load_menudata()
     menufont=LoadT8(DATADIR"/fonts/font32v.T8");
     menufont1=LoadT8(DATADIR"/fonts/font32r.T8");
     background=LoadT8(DATADIR"/Tgfx/intro.T8");
-    SDL_SetColorKey(menufont, SDL_SRCCOLORKEY, SDL_MapRGB(menufont->format,0,255,0));
-    SDL_SetColorKey(menufont1, SDL_SRCCOLORKEY, SDL_MapRGB(menufont1->format,0,255,0));
+    SDL_SetColorKey(menufont, SDL_TRUE, SDL_MapRGB(menufont->format,0,255,0));
+    SDL_SetColorKey(menufont1, SDL_TRUE, SDL_MapRGB(menufont1->format,0,255,0));
 
     option=Mix_LoadWAV(DATADIR"/sounds/option.wav");
     coderight=Mix_LoadWAV(DATADIR"/sounds/exit.wav");
@@ -280,11 +282,11 @@ void initcredits()
     creditslinecounter=0;
     background=LoadT8(DATADIR"/Tgfx/endcredits.T8");
     creditsfont=LoadT8(DATADIR"/fonts/font1.T8");
-    SDL_SetColorKey(creditsfont, SDL_SRCCOLORKEY, SDL_MapRGB(creditsfont->format,0,255,0));
+    SDL_SetColorKey(creditsfont, SDL_TRUE, SDL_MapRGB(creditsfont->format,0,255,0));
     SDL_Surface *temp;
-    temp = SDL_CreateRGBSurface(SDL_SWSURFACE,600,440,16,0,0,0,0);
-    creditsbuffer = SDL_DisplayFormat(temp);
-    creditsbuffer1 = SDL_DisplayFormat(temp);
+    temp = SDL_CreateRGBSurface(0,600,440,16,0,0,0,0);
+    creditsbuffer = display_format(temp);
+    creditsbuffer1 = display_format(temp);
     SDL_FreeSurface(temp);
     setback();
 

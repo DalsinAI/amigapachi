@@ -345,8 +345,8 @@ void print_player()
     playersrc.h = mplayer[dificulty].h;
     
     SDL_BlitSurface(player, &playersrc, screen, &playerposreal);
-    SDL_UpdateRect(screen,oldplayerposreal.x,oldplayerposreal.y,P_w,oldplayerpos.h);
-    SDL_UpdateRect(screen,playerposreal.x,playerposreal.y,mplayer[dificulty].w,mplayer[dificulty].h);
+    flip_screen();
+    flip_screen();
 }
 
 void animateplayer()

@@ -63,6 +63,7 @@ char code[]="....";
 int inputloop;
 
 int menuvalue = 1;
+int menu_armed = 1; // menu: 1 = next key press counts as a new action
 int fullscreen = 1;
 int dificulty = 2;
 

@@ -56,7 +56,7 @@ void win_game()
 	print_credits();
     }
     SDL_BlitSurface(background, NULL, screen, NULL);
-    SDL_Flip(screen);
+    flip_screen();
     stop_music();
     unloadcredits();
 }
@@ -93,7 +93,7 @@ void stage_up()
     if(stage+1 != CEMETERY && stage+1 != CAVES && stage+1 != CASTLE && stage+1 != LAB)
     {
 	SDL_FillRect(screen, &scorerect, 0); // limpiamos el cuadrado de los marcadores
-	SDL_UpdateRect(screen, scorerect.x, scorerect.y, scorerect.w, scorerect.h);
+	flip_screen();
     }
     mplayer[dificulty].objects = 0; mplayer[dificulty].stageup = 0;
     mplayer[dificulty].left = 0; mplayer[dificulty].right = 0;
@@ -146,9 +146,9 @@ void stage_up()
 void start_game()
 {
     LoadT(&font,DATADIR"/fonts/font16d.T");
-    SDL_SetColorKey(font, SDL_SRCCOLORKEY, SDL_MapRGB(font->format,0,0,0));
+    SDL_SetColorKey(font, SDL_TRUE, SDL_MapRGB(font->format,0,0,0));
     print_text(font,screen,16,16,140,90,"LOADING GAME DATA... PLEASE WAIT");
-    SDL_UpdateRect(screen,140,90,520,16);
+    flip_screen();
     SDL_FreeSurface(font);
     
     setgame();
@@ -283,7 +283,7 @@ void print_timer()
     else
 	print_text(font,screen,16,16,352,564,"%d:0%d",minutes,seconds);
 
-    SDL_UpdateRect(screen,224,544,208,40);
+    flip_screen();
 }
 
 void do_gametimer()
@@ -324,7 +324,7 @@ void chk_sequence()
 	}
     }
     int object_is_here=0; // esta variable indica si el objeto que sigue en la secuencia esta en la pantalla actual
-    int bright_x, bright_y; // variables que indica en que posicion debe aparecer el brillo del proximo objeto a recoger
+    int bright_x = 0, bright_y = 0; // variables que indica en que posicion debe aparecer el brillo del proximo objeto a recoger
     for(n=0;n<5;n++)
     {
 	if(mobject[(R_current-1)*5+n].seq==sequence)
@@ -347,11 +347,14 @@ void game_loop()
 	play_music();
 	game_events();
 	animate();
+	defer_present = 1;     // compose erase + monsters + player off-screen...
 	clean_player();
 	if(fadingobject==1) // chquea si se debe eliminar un objeto
 	    alphade=fade_object(alphade);
 	print_monsters();
 	print_player();
+	defer_present = 0;     // ...then present the finished frame in a single flip
+	flip_screen();
 	chk_sequence(); // esta rutina se fija cual es el proximo objeto de la sequencia (Bomb Jack feature)
 	chk_state(); // esta rutina chequea si el personaje se murio, o si paso de nivel
 	SDL_Delay(1);
