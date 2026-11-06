@@ -1,0 +1,57 @@
+# Process this file with autoconf to produce a configure script.
+AC_INIT(src/faes.cpp, 0.1, T-1000@Bigfoot.com)
+AM_INIT_AUTOMAKE(pachi, 0.1)
+AM_CONFIG_HEADER(config.h)
+
+# Checks for programs.
+AC_PROG_CC
+AC_PROG_CXX
+AC_PROG_INSTALL
+AC_PROG_MAKE_SET
+
+# Checks for libraries.
+SDL_VERSION=1.2.0
+AM_PATH_SDL($SDL_VERSION,
+            :,
+	    AC_MSG_ERROR([*** SDL version $SDL_VERSION not found. Visit http://www.libsdl.org and get it])
+)
+AC_CHECK_LIB(SDL_mixer, Mix_OpenAudio,, AC_MSG_ERROR([*** SDL_mixer not found. Visit http://www.libsdl.org and get it]))
+AC_CHECK_LIB(pthread, pthread_create)
+
+CFLAGS="$CFLAGS $SDL_CFLAGS"
+CXXFLAGS="$CXXFLAGS $SDL_CFLAGS"
+LIBS="$LIBS $SDL_LIBS"
+
+# Checks for header files.
+AC_HEADER_STDC
+AC_CHECK_HEADERS([stdlib.h string.h])
+
+# Checks for typedefs, structures, and compiler characteristics.
+
+# Checks for library functions.
+AC_FUNC_VPRINTF
+
+if test "x$prefix" = xNONE; then
+   prefix="${ac_default_prefix}"
+fi
+
+AC_ARG_ENABLE(enable-devel,
+        [  --enable-devel    enables development paths],
+	[enable_devel=$enableval])
+	
+if test "$enable_devel" = "yes"; then
+	DATADIR="."
+	SCOREDIR="."
+else
+	DATADIR="$datadir/$PACKAGE"
+	SCOREDIR="/var/lib/games/$PACKAGE"
+fi
+
+eval DATAPATH=`eval echo "$DATADIR"`
+eval SCOREPATH=`eval echo "$SCOREDIR"`
+AC_DEFINE_UNQUOTED(DATADIR, "$DATAPATH")
+AC_DEFINE_UNQUOTED(SCOREDIR, "$SCOREPATH")
+AC_SUBST(DATAPATH)
+AC_SUBST(SCOREPATH)
+
+AC_OUTPUT(Makefile src/Makefile Tgfx/Makefile data/Makefile fonts/Makefile music/Makefile sounds/Makefile docs/Makefile)

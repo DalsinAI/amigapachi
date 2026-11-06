@@ -1,0 +1,2 @@
+#undef DATADIR
+#undef SCOREDIR
