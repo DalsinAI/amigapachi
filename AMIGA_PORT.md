@@ -13,7 +13,12 @@ Debian's patches 1.0-17 (source-fixes, scorefile and sdl2-migration, which
 moves it from SDL 1.2 to SDL 2) as the second commit. Branch
 team2/pachi-amiga.
 
-Status: builds; not yet run in the lab.
+Status: plays in the lab (Instance-45 on GFOpenUp 0.8.19, 6 November
+2026): the intro comic, the cemetery stage's intro, the first room (the
+monsters moving, the timer, score, lives and items), Escape to the main
+menu and Exit back to the Shell ("Thanks for playing"). The music (S3M and
+STM through SDL2_mixer.module) and the sounds load without an error; the
+lab's sound is muted, so not heard.
 
 
 What you need
@@ -29,6 +34,7 @@ How to play
 
 Open the Pachi icon, or run Pachi from a Shell. The game reads its data
 from the drawer's data/ and keeps its high scores in data/pachi.scores.
+The cursor keys move and jump, Escape goes back to the menu.
 
 
 Building
