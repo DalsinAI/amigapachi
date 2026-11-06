@@ -1,0 +1,72 @@
+# Pachi el marciano 1.0 for AmigaOS 3.x, 68040/68060 + FPU, on OpenGPU's
+# SDL 2 (with Debian's sdl2-migration patch).
+#
+#   make -f amiga/Makefile.amigaos dist \
+#        STOVE=/path/to/openamigagcc-16.2.0-open4 \
+#        SDL2KIT=/path/to/opengpu-sdk
+#
+# configure is not run: src/faes.cpp (which includes every other source
+# file, as upstream builds it) with amiga/config.h. SDL2KIT is the OpenGPU
+# developer kit (SDL2 and SDL2_mixer: the program's halves of
+# LIBS:OpenGPU's modules).
+
+STOVE   ?= $(HOME)/CradleLab/toolchain/openamigagcc-16.2.0-open4-x86_64-linux
+SDL2KIT ?= /mnt/amigachrome/team2/deps/opengpu-sdk
+CC      = $(STOVE)/bin/m68k-amigaos-gcc
+CXX     = $(STOVE)/bin/m68k-amigaos-g++
+STRIP   = $(STOVE)/bin/m68k-amigaos-strip
+CPU     ?= -m68040 -m68881
+# -fno-tree-loop-distribute-patterns: GCC 16's loop miscompile (the kit's
+# sdl2-config gives it for GCC 16 too).
+OPT     ?= -O2 -fomit-frame-pointer -fno-tree-loop-distribute-patterns
+
+BUILD   = build/amigaos
+OBJDIR  = $(BUILD)/obj
+PROG    = Pachi
+OUT     = dist/Pachi
+
+INC     = -Iamiga -Isrc -I$(SDL2KIT)/include
+CFLAGS  = -noixemul $(OPT) $(CPU) -fno-common -MMD -MP
+CXXFLAGS = $(CFLAGS) -D__amigaos__ -DNDEBUG $(INC) -std=gnu++98 -fpermissive -w
+LDFLAGS = -noixemul $(CPU)
+LIBS    = -L$(SDL2KIT)/lib -lSDL2_mixer -lSDL2 -lpthread -latomic -lm
+
+OBJS    = $(OBJDIR)/src/faes.o $(OBJDIR)/amiga/stack.o
+ICONS   = $(wildcard amiga/icons/*.info)
+
+all: $(BUILD)/$(PROG)
+
+$(BUILD)/$(PROG): $(OBJS)
+	$(CXX) $(LDFLAGS) -o $@.debug $(OBJS) $(LIBS)
+	$(STRIP) -o $@ $@.debug
+
+$(OBJDIR)/src/faes.o: src/faes.cpp $(wildcard src/*.c src/*.h) amiga/config.h
+	@mkdir -p $(dir $@)
+	$(CXX) $(CXXFLAGS) -c -o $@ $<
+
+$(OBJDIR)/amiga/%.o: amiga/%.c
+	@mkdir -p $(dir $@)
+	$(CC) $(CFLAGS) -Wall -c -o $@ $<
+
+# The drawer: the program, the game's data/ (its pictures Tgfx, rooms,
+# fonts, music and sounds; the high-score file made from data/scores.dat,
+# as Debian does), ReadMe and the licence.
+dist: $(BUILD)/$(PROG) $(ICONS) AMIGA_PORT.md
+	rm -rf $(OUT) && mkdir -p $(OUT)/data
+	cp $(BUILD)/$(PROG) $(OUT)/
+	for d in Tgfx data fonts music sounds; do mkdir -p $(OUT)/data/$$d && \
+	  find $$d -maxdepth 1 -type f ! -name 'Makefile*' -exec cp {} $(OUT)/data/$$d/ \; ; done
+	cp data/scores.dat $(OUT)/data/pachi.scores
+	cp AMIGA_PORT.md $(OUT)/ReadMe
+	cp COPYING $(OUT)/COPYING.txt
+	cp amiga/icons/Pachi.info amiga/icons/ReadMe.info $(OUT)/
+	cp amiga/icons/ReadMe.info $(OUT)/COPYING.txt.info
+	cp amiga/icons/Folder.info $(OUT)/data.info
+	cp amiga/icons/Pachi-drawer.info dist/Pachi.info
+
+-include $(OBJS:.o=.d)
+
+clean:
+	rm -rf $(BUILD)
+
+.PHONY: all clean dist
