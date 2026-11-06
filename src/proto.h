@@ -5,6 +5,9 @@ void setback();
 void fadesurface(SDL_Surface *surface, int x, int y, int speed);
 
 void screen_mode();
+void flip_screen();                                   // present "screen" to the window (SDL2)
+SDL_Surface *display_format(SDL_Surface *surface);    // replaces SDL_DisplayFormat() (SDL2)
+void set_surface_alpha(SDL_Surface *surface, int enable, Uint8 alpha); // replaces SDL_SetAlpha() (SDL2)
 void setgame();
 void start_game();
 

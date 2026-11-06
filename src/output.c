@@ -18,14 +18,16 @@
 
 void screen_mode()
 {
+    // Toggle full screen. The renderer's logical size keeps the 800x600 image
+    // correctly scaled, so unlike SDL 1.2 we do not rebuild the drawing surface.
     if(fullscreen)
     {
-        screen = SDL_SetVideoMode(screen_w,screen_h,screen_bpp,0);
+        SDL_SetWindowFullscreen(window, 0);
         fullscreen = 0;
     }
     else
     {
-        screen = SDL_SetVideoMode(screen_w,screen_h,screen_bpp,SDL_FULLSCREEN);
+        SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN_DESKTOP);
         fullscreen = 1;
     }
 }
@@ -43,7 +45,7 @@ void print_credits()
 	for(int n=0; n<=37; n++)
 	    line2print[n]=creditstext[n+(creditslinecounter*36)];
 	
-	print_text(creditsfont, creditsbuffer, creditsfont_w, creditsfont_h, 0,400, line2print);
+	print_text(creditsfont, creditsbuffer, creditsfont_w, creditsfont_h, 0,400, "%s", line2print);
 	// imprime una linea de texto en la parte de abajo (no imprimible del primer buffer)
 
 	needinput=0;
@@ -86,14 +88,14 @@ void print_credits()
 	bgpos.y=100;
 	
     SDL_SetColorKey(creditsbuffer, 0, 0);
-    SDL_SetAlpha(creditsbuffer, SDL_SRCALPHA, 255);
+    set_surface_alpha(creditsbuffer, 1, 255);
 	SDL_BlitSurface(creditsbuffer, &cbuffer, creditsbuffer1, &cbuffer1);
 	SDL_BlitSurface(creditsbuffer1, &cbuffer1, creditsbuffer, &cbuffer1);
 	SDL_BlitSurface(background, &bgpos, screen, &bgpos);
-    SDL_SetColorKey(creditsbuffer, SDL_SRCCOLORKEY, SDL_MapRGB(creditsbuffer->format, 0, 255, 0));
-    SDL_SetAlpha(creditsbuffer, SDL_SRCALPHA, 128);
+    SDL_SetColorKey(creditsbuffer, SDL_TRUE, SDL_MapRGB(creditsbuffer->format, 0, 255, 0));
+    set_surface_alpha(creditsbuffer, 1, 128);
 	SDL_BlitSurface(creditsbuffer, &cbuffer1, screen, &creditspos);
-	SDL_UpdateRect(screen,100,100,600,400);
+	flip_screen();
 	SDL_Delay(50);
 	
 	linegone++;
@@ -124,7 +126,7 @@ void do_help()
     print_text(scorefont,  screen, 16, 16, 72, 340, "  DONE, THE EXIT GATE TO THE NEXT LEVEL  ");
     print_text(scorefont,  screen, 16, 16, 72, 360, "WILL APPEAR, BUT BEWARE OF THE ENEMIES...");
 
-    SDL_Flip(screen);
+    flip_screen();
     escape_exit=0;
     while(escape_exit == 0)
     {
@@ -140,15 +142,15 @@ void print_monitor()
     print_text(scorefont,screen,16,16,30,528, "LIVES:%d", mplayer[dificulty].lives);
     print_text(scorefont,screen,16,16,30,546, "STAGE:%d", stage);
     print_text(scorefont,screen,16,16,30,564, "ITEMS:%d/%d",mplayer[dificulty].objects,mstage[stage-1].objects);
-    SDL_UpdateRect(screen, 30, 482, 500, 100); 
+    flip_screen(); 
 }
 
 void blinkscreen(int R,int G, int B, int A)
 {
     SDL_FillRect(screen,NULL,SDL_MapRGBA(screen->format,R,G,B,A));
-    SDL_Flip(screen);
+    flip_screen();
     setback();
-    SDL_Flip(screen);
+    flip_screen();
 }
 
 void print_room()
@@ -207,10 +209,10 @@ void print_room()
     }
     SDL_BlitSurface(screen,&gamearea,screenbak,NULL);
     print_monitor(); //imprime la informacion del jugador (vidas, puntos, etc)
-    SDL_Flip(screen);
+    flip_screen();
 }
 
-void showcode(char *str)
+void showcode(const char *str)
 {
     SDL_Rect code;
 	code.x=280; code.y=220;code.w=240;code.h=50;
@@ -220,7 +222,7 @@ void showcode(char *str)
 	code.x=280; code.y=220;code.w=240;code.h=50;
     print_text(scorefont,screen,16,16,code.x+8,code.y+7,"STAGE CODE IS:");
     print_text(scorefont1,screen,16,16,code.x+90,code.y+27,"%s",str);
-    SDL_UpdateRect(screen, code.x, code.y, code.w, code.h);
+    flip_screen();
     escape_exit=0;
     while(escape_exit==0)
     {
@@ -232,7 +234,7 @@ void showcode(char *str)
 void setback()
 {
     SDL_BlitSurface(background,NULL,screen,NULL);
-    SDL_Flip(screen);
+    flip_screen();
 }
 
 void fadesurface(SDL_Surface *surface, int x, int y, int speed)
@@ -243,14 +245,14 @@ void fadesurface(SDL_Surface *surface, int x, int y, int speed)
     while(alpha<255)
     {
 	delta_time();
-	SDL_SetAlpha(surface, SDL_SRCALPHA, int(alpha));
+	set_surface_alpha(surface, 1, int(alpha));
 	SDL_BlitSurface(surface, NULL, screen, &dst);
-	SDL_Flip(screen);
+	flip_screen();
 	alpha+=(speed*imove);
     }
-    SDL_SetAlpha(surface, 0, 0);
+    set_surface_alpha(surface, 0, 0);
     SDL_BlitSurface(surface, NULL, screen, &dst);
-    SDL_Flip(screen);
+    flip_screen();
 }
 
 // speed es la velocidad del fade y blackback es un flag que indica si debe poner un fondo de color antes de imprimir (1=negro, 2=blanco)
@@ -259,10 +261,10 @@ float intro_blit(SDL_Surface *surface, int x, int y, int w, int h, float blit_al
     SDL_Rect dst;
 	dst.x=x; dst.y=y; dst.w=w; dst.h=h;
     int alpha=int(blit_alpha);
-    SDL_SetAlpha(surface, SDL_SRCALPHA, alpha);
+    set_surface_alpha(surface, 1, alpha);
     blit_alpha+=(speed*imove);
     SDL_BlitSurface(surface, NULL, screen, &dst);
-    SDL_UpdateRect(screen, dst.x, dst.y, dst.w, dst.h);
+    flip_screen();
     if(back==1)
     {
 	if(blit_alpha<255)
@@ -275,9 +277,9 @@ float intro_blit(SDL_Surface *surface, int x, int y, int w, int h, float blit_al
     }
     if(blit_alpha>255)
     {
-	SDL_SetAlpha(surface, 0, 0);
+	set_surface_alpha(surface, 0, 0);
 	SDL_BlitSurface(surface, NULL, screen, &dst);
-	SDL_Flip(screen);
+	flip_screen();
     }
     return(blit_alpha);
 }
@@ -287,11 +289,11 @@ float fade(SDL_Surface *surface, int x, int y, int w, int h, int R, int G, int B
     SDL_Rect dst;
 	dst.x=x; dst.y=y; dst.w=w; dst.h=h;
     int alpha=int (blit_alpha);
-    SDL_SetAlpha(surface, SDL_SRCALPHA, alpha);
+    set_surface_alpha(surface, 1, alpha);
     blit_alpha-=(speed*imove);
     SDL_FillRect(screen, &dst, SDL_MapRGB(screen->format,R,G,B));
     SDL_BlitSurface(surface, NULL, screen, &dst);
-    SDL_UpdateRect(screen, dst.x, dst.y, dst.w, dst.h);
+    flip_screen();
     return(blit_alpha);
 }
 
@@ -300,7 +302,6 @@ void showposter(int num)
     if(num==CEMETERY || num==CAVES || num==CASTLE || num==CASTLE+1 || num==LAB)
     {
 	escape_exit=0;
-	SDL_Surface *temp;
 	switch(num)
 	{
 	    case CEMETERY:

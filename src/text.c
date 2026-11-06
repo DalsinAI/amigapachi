@@ -1,4 +1,4 @@
-void print_text(SDL_Surface *font, SDL_Surface *surface, int font_w, int font_h, int text_x, int text_y, char *str, ...)  //Rutina para imprimir texto estatico en la pantalla
+void print_text(SDL_Surface *font, SDL_Surface *surface, int font_w, int font_h, int text_x, int text_y, const char *str, ...)  //Rutina para imprimir texto estatico en la pantalla
 {
     SDL_Rect srctxt; // la posicion donde se encuentra el caracter en el bitmap
     SDL_Rect dsttxt; // la posicion donde se imprimira el texto
@@ -7,7 +7,7 @@ void print_text(SDL_Surface *font, SDL_Surface *surface, int font_w, int font_h,
     
     va_list ap;
     va_start(ap, str);
-	vsprintf(texto, str, ap);
+	vsnprintf(texto, sizeof(texto), str, ap);
     va_end(ap);
     
     srctxt.w = font_w;
@@ -15,7 +15,7 @@ void print_text(SDL_Surface *font, SDL_Surface *surface, int font_w, int font_h,
     srctxt.y = 0;
     int linecounter = 0 ; // este contador se utiliza para saber en que linea imprimimos el texto
     int charpos = 0;
-    for(int charcounter = 0; charcounter <= (strlen(texto));charcounter++)
+    for(unsigned charcounter = 0; charcounter <= (strlen(texto));charcounter++)
     {
 	int curchar=texto[charcounter];
 	if(curchar == 94)

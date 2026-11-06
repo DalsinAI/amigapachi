@@ -16,7 +16,7 @@
 /*
     LoadT carga un grafico en formato .T de 24 bits en una superficie SDL
 */
-void LoadT(SDL_Surface **Tsurface, char *str)
+void LoadT(SDL_Surface **Tsurface, const char *str)
 {
     FILE *Tsrc;
 
@@ -41,7 +41,7 @@ void LoadT(SDL_Surface **Tsurface, char *str)
     T_height = T_hheight*256+T_lheight;
 
     SDL_Surface *temp;
-    temp = SDL_CreateRGBSurface(SDL_SWSURFACE,T_width,T_height,24,0,0,0,0);
+    temp = SDL_CreateRGBSurface(0,T_width,T_height,24,0,0,0,0);
     
     if(SDL_MUSTLOCK(temp))
 	SDL_LockSurface(temp);
@@ -64,12 +64,12 @@ void LoadT(SDL_Surface **Tsurface, char *str)
 
     if(SDL_MUSTLOCK(temp))
 	SDL_UnlockSurface(temp);
-    *Tsurface = SDL_DisplayFormat(temp);
+    *Tsurface = display_format(temp);
     SDL_FreeSurface(temp);
     fclose(Tsrc);
 }
 
-SDL_Surface * LoadT8(char *str)
+SDL_Surface * LoadT8(const char *str)
 {
     SDL_Surface *Tsurface;
     FILE *Tsrc;
@@ -91,7 +91,7 @@ SDL_Surface * LoadT8(char *str)
         paleta[pal]=getc(Tsrc);
     // leemos el bitmap en una superficie de 24 bits
     SDL_Surface *temp;
-    temp = SDL_CreateRGBSurface(SDL_SWSURFACE,width,height,24,0,0,0,0);
+    temp = SDL_CreateRGBSurface(0,width,height,24,0,0,0,0);
     if(SDL_MUSTLOCK(temp))
 	SDL_LockSurface(temp);
     Uint32 pixel;
@@ -110,7 +110,7 @@ SDL_Surface * LoadT8(char *str)
     }
     if(SDL_MUSTLOCK(temp))
 	SDL_UnlockSurface(temp);
-    Tsurface = SDL_DisplayFormat(temp);
+    Tsurface = display_format(temp);
     SDL_FreeSurface(temp);
     fclose(Tsrc);
     return(Tsurface);

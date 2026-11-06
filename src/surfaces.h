@@ -7,7 +7,11 @@ SDL_Surface *menufont;
 SDL_Surface *menufont1;
 
 // --- Screen
-SDL_Surface *screen;
+SDL_Surface *screen;        // offscreen drawing buffer (all game rendering targets this)
+SDL_Window *window;         // SDL2 application window
+SDL_Renderer *renderer;     // renderer that scales "screen" onto the window
+SDL_Texture *screentex;     // streaming texture used to upload "screen" each frame
+int defer_present = 0;      // when set, flip_screen() composes without presenting (one present per frame)
 SDL_Surface *background;
 SDL_Surface *backs;
 SDL_Surface *tiles;

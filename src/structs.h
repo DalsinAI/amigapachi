@@ -39,11 +39,11 @@ struct Cplayer
 
 struct Cstages
 {
-    char * title;
-    char * music;
+    const char * title;
+    const char * music;
     int  objects;
     int  time;
-    char * code;
+    const char * code;
 };
 
 struct Croom

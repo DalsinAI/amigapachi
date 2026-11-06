@@ -18,10 +18,9 @@
 
 void show_hiscores()
 {
-    SDL_SetColorKey(scorefont,SDL_SRCCOLORKEY,SDL_MapRGB(scorefont->format,0,0,0));
-    SDL_SetColorKey(scorefont1,SDL_SRCCOLORKEY,SDL_MapRGB(scorefont1->format,0,0,0));
-    SDL_SetColorKey(scorefont1,SDL_SRCCOLORKEY,SDL_MapRGB(scorefont1->format,0,0,0));
-    char plyername[]="          ";
+    SDL_SetColorKey(scorefont,SDL_TRUE,SDL_MapRGB(scorefont->format,0,0,0));
+    SDL_SetColorKey(scorefont1,SDL_TRUE,SDL_MapRGB(scorefont1->format,0,0,0));
+    SDL_SetColorKey(scorefont1,SDL_TRUE,SDL_MapRGB(scorefont1->format,0,0,0));
     char diflevel[] ="      ";
     print_text(scorefont1,screen,16,16,30, 55,"         PACHI EL MARCIANO    TOP TEN         ");//scorename[a]);
     print_text(scorefont1,screen,16,16,30, 95,"NAME         STAGE    TIME    LEVEL     SCORE ");//scorename[a]);
@@ -49,7 +48,7 @@ void show_hiscores()
 	print_text(scorefont,screen,16,16,502,170+(35*a),"%s",diflevel);
 	print_text(scorefont,screen,16,16,672,170+(35*a),"%d",scorescore[a]);
     }
-    SDL_Flip(screen);
+    flip_screen();
 }
 
 void do_hiscores()
@@ -103,9 +102,10 @@ void do_gameover()
 	    hiscore_events();
 	    SDL_FillRect(screen,&box,SDL_MapRGB(screen->format,0,0,0));
 	    print_text(scorefont1,screen,16,16,box.x+10,box.y+5,"ENTER YOUR NAME");
-	    print_text(scorefont1,screen,16,16,box.x+51+(namechar*16),box.y+29,".");
+	    for (int i = namechar; i < 10; i++)
+		print_text(scorefont1,screen,16,16,box.x+51+(i*16),box.y+29,".");
 	    print_text(scorefont,screen,16,16,box.x+51,box.y+24,"%s",playername);
-	    SDL_Flip(screen);
+	    flip_screen();
 	}
 	strncpy(scorename[scorepos],playername,10);
 	scorescore[scorepos]=score;
