@@ -1,5 +1,5 @@
 {
-  "about": "The Workbench icons of the Pachi drawer: python3 AMICRADLE/scripts/port_icons.py amiga/icons/icons.json --out amiga/icons (DalsinAI/amicradle). The art is upstream's Tgfx/icon.bmp (32x32) at 48x48. Pachi-drawer.info is the drawer's own icon, Pachi.info beside the drawer; it has its own name here so as not to meet the program's Pachi.info. ReadMe.info is also copied for the licence; Folder.info for data.",
+  "about": "The Workbench icons of the Pachi drawer: python3 AMICRADLE/scripts/port_icons.py amiga/icons/icons.json --out amiga/icons (DalsinAI/amicradle). The art (art/pachi.svg, drawn as an OS 3.5 GlowIcon: shaped, shaded, see-through round the edges) is The AmiCradle Team's own, under the same terms as the other Amiga files; art/pachi.png is it rendered at 128 x 128. Pachi-drawer.info is the drawer's own icon, Pachi.info beside the drawer; it has its own name here so as not to meet the program's Pachi.info.",
   "drawer": {
     "name": "Pachi",
     "file": "Pachi-drawer.info"
@@ -14,11 +14,6 @@
     {
       "file": "ReadMe.info",
       "kind": "readme"
-    },
-    {
-      "file": "Folder.info",
-      "kind": "drawer",
-      "type": "drawer"
     }
   ]
 }
