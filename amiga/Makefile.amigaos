@@ -58,6 +58,7 @@ dist: $(BUILD)/$(PROG) $(ICONS) AMIGA_PORT.md
 	  find $$d -maxdepth 1 -type f ! -name 'Makefile*' -exec cp {} $(OUT)/data/$$d/ \; ; done
 	cp data/scores.dat $(OUT)/data/pachi.scores
 	cp AMIGA_PORT.md $(OUT)/ReadMe
+	cp amiga/Controls $(OUT)/Controls
 	cp COPYING $(OUT)/COPYING.txt
 	cp amiga/icons/Pachi.info amiga/icons/ReadMe.info $(OUT)/
 	cp amiga/icons/ReadMe.info $(OUT)/COPYING.txt.info
